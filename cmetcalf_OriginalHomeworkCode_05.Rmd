@@ -1,0 +1,73 @@
+---
+title: "cmetcalf_OriginalHomeworkCode_05"
+author: "Cat Metcalf"
+date: "2023-11-12"
+output: 
+prettydoc::html_pretty:
+  theme: cayman
+  toc: TRUE
+---
+
+# Boots for Days!
+
+## Question 1
+
+Using the “KamilarAndCooperData.csv” dataset, run a linear regression looking at log(HomeRange_km2) in relation to log(Body_mass_female_mean) and report your β coeffiecients (slope and intercept).
+
+```{r}
+library(curl)
+
+f <- curl("https://raw.githubusercontent.com/fuzzyatelin/fuzzyatelin.github.io/master/AN588_Fall23/KamilarAndCooperData.csv")
+d <- read.csv(f, header = TRUE, sep = ",", stringsAsFactors = FALSE)
+head(d) #the dataframe we are using
+```
+
+```{r}
+m1 <- lm(data = d, log(Body_mass_female_mean) ~ log(HomeRange_km2)) #takes the linear model of the logged data
+summary(m1) #allows us to see the data associated, aka the slope and intercept
+```
+Slope: 0.50638 ? 
+Intercept: 8.48616
+
+Confidence interval for data:
+```{r}
+ci <- confint(m1, level = 0.95)
+ci
+```
+
+## Question 2
+
+Then, use bootstrapping to sample from your data 1000 times with replacement, each time fitting the same model and calculating the same coefficients. This generates a sampling distribution for each β coefficient.
+
+Estimate the standard error for each of your β coefficients as the standard deviation of the sampling distribution from your bootstrap and determine the 95% CI for each of your β coefficients based on the appropriate quantiles from your sampling distribution.
+
+How does the former compare to the SE estimated from your entire dataset using the formula for standard error implemented in lm()?
+
+How does the latter compare to the 95% CI estimated from your entire dataset?
+
+```{r}
+k <- 1000 #number of samples
+n <- 30 #size of each sample
+s <- NULL #holds each sample
+for (i in 1:k) {
+  s[[i]] <- sample(d, size=n, replace = TRUE)
+}
+head(s) #gives our samples
+```
+
+```{r}
+m <- NULL #holds each model and calculation
+for (i in 1:k) {
+  m[[i]] <- lm(data=d, log(Body_mass_female_mean) ~ log(HomeRange_km2)) #calculated model from question 1
+}
+head (m) # how do I make this apply to the sample, I only get errors when trying to apply it using s[[i]] as data?
+```
+
+```{r}
+se <- NULL #holds each estimated standard error
+for (i in 1:k) {
+  se[i] <- sd(s[[i]]) #calculates standard error with standard deviation of the sampling distribution
+}
+head(se)
+```
+Calculating standard error with the sd() of the sampling distribution is also only giving an error?
