@@ -23,11 +23,11 @@ head(d) #the dataframe we are using
 ```
 
 ```{r}
-m1 <- lm(data = d, log(Body_mass_female_mean) ~ log(HomeRange_km2)) #takes the linear model of the logged data
+m1 <- lm(data = d, log(HomeRange_km2) ~ log(Body_mass_female_mean)) #takes the linear model of the logged data
 summary(m1) #allows us to see the data associated, aka the slope and intercept
 ```
-Slope: 0.50638 ? 
-Intercept: 8.48616
+Slope: 1.03643 
+Intercept: -9.44123
 
 Confidence interval for data:
 ```{r}
@@ -46,6 +46,23 @@ How does the former compare to the SE estimated from your entire dataset using t
 How does the latter compare to the 95% CI estimated from your entire dataset?
 
 ```{r}
+library(boot) #package that allows us to bootstrap with a function
+statistic <- function(formula, data, indices) {
+  d <- data[indices,] #sample selection
+  fit <- lm(formula, data=d) #regression model
+  return(coef(fit)) #tells it that we want coefficients to be estimated
+}
+set.seed(22)
+sample <- boot(data = d, statistic = statistic, R = 1000, formula = log(HomeRange_km2) ~ log(Body_mass_female_mean)) #boot function, sampling 1000 times with the linear regression model and applying the y ~ x function from above
+summary(sample) #outputs our sample data
+
+#standard error of samples?
+boot.ci(sample, type = "perc", index = 1) #CI of intercept
+boot.ci(sample, type = "perc", index = 2) #CI of BMFM
+```
+Both CIs of the sample and original data are very similar to each other. 
+*I could not get the method we had done in the modules to work below so I found a different solution on https://www.statmethods.net/advstats/bootstrapping.html which I used above, but I am not sure how to calculate the standard error using sd?
+```{r}
 k <- 1000 #number of samples
 n <- 30 #size of each sample
 s <- NULL #holds each sample
@@ -63,11 +80,11 @@ for (i in 1:k) {
 head (m) # how do I make this apply to the sample, I only get errors when trying to apply it using s[[i]] as data?
 ```
 
-```{r}
+
 se <- NULL #holds each estimated standard error
 for (i in 1:k) {
   se[i] <- sd(s[[i]]) #calculates standard error with standard deviation of the sampling distribution
 }
 head(se)
-```
-Calculating standard error with the sd() of the sampling distribution is also only giving an error?
+
+Calculating standard error with the sd() of the sampling distribution is also only giving an error? (had to remove so I could knit)
