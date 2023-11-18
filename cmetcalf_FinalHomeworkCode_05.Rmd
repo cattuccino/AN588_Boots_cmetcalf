@@ -1,0 +1,67 @@
+---
+title: "cmetcalf_FinalHomeworkCode_05"
+author: "Cat Metcalf"
+date: "2023-11-18"
+output: 
+prettydoc::html_pretty:
+  theme: cayman
+  toc: TRUE
+---
+
+# Boots for Days!
+
+## Question 1
+
+Using the “KamilarAndCooperData.csv” dataset, run a linear regression looking at log(HomeRange_km2) in relation to log(Body_mass_female_mean) and report your β coeffiecients (slope and intercept).
+
+```{r}
+library(curl)
+
+f <- curl("https://raw.githubusercontent.com/fuzzyatelin/fuzzyatelin.github.io/master/AN588_Fall23/KamilarAndCooperData.csv")
+d <- read.csv(f, header = TRUE, sep = ",", stringsAsFactors = FALSE)
+head(d) #the dataframe we are using
+```
+
+
+```{r}
+m1 <- lm(data = d, log(HomeRange_km2) ~ log(Body_mass_female_mean)) #takes the linear model of the logged data
+summary(m1) #allows us to see the data associated, aka the slope and intercept
+```
+
+Slope: 1.03643 
+Intercept: -9.44123
+
+Confidence interval for data:
+```{r}
+ci <- confint(m1, level = 0.95)
+ci
+```
+
+## Question 2
+
+Then, use bootstrapping to sample from your data 1000 times with replacement, each time fitting the same model and calculating the same coefficients. This generates a sampling distribution for each β coefficient.
+
+Estimate the standard error for each of your β coefficients as the standard deviation of the sampling distribution from your bootstrap and determine the 95% CI for each of your β coefficients based on the appropriate quantiles from your sampling distribution.
+
+How does the former compare to the SE estimated from your entire dataset using the formula for standard error implemented in lm()?
+
+How does the latter compare to the 95% CI estimated from your entire dataset?
+
+```{r}
+library(boot) #package that allows us to bootstrap with a function
+statistic <- function(formula, data, indices) {
+  d <- data[indices,] #sample selection
+  fit <- lm(formula, data=d) #regression model
+  return(coef(fit)) #tells it that we want coefficients to be estimated
+}
+set.seed(22) #so we can replicate same sampling when we apply calculations
+sample <- boot(data = d, statistic = statistic, R = 1000, formula = log(HomeRange_km2) ~ log(Body_mass_female_mean)) #boot function, sampling 1000 times with the linear regression model and applying the y ~ x function from above
+sample #outputs our sample data with bootstrap statistics
+
+#standard error of samples? #using "perc" for percentiles since it is not a normal distribution
+boot.ci(sample, type = "perc", index = 1) #CI of intercept
+boot.ci(sample, type = "perc", index = 2) #CI of BMFM
+```
+
+Both CIs of the sample and original data are very similar to each other. 
+*I could not get the method we had done in the modules to work so I found a different solution on https://www.statmethods.net/advstats/bootstrapping.html which I used above
